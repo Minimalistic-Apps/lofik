@@ -1,0 +1,47 @@
+{
+  "name": "@lofik/react",
+  "version": "1.0.2",
+  "description": "React library for building local-first apps.",
+  "main": "dist/index.js",
+  "source": "src/index.ts",
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "local-first",
+    "e2ee",
+    "private",
+    "secure",
+    "real-time",
+    "mnemonic"
+  ],
+  "author": "pycan <pycan@proton.me>",
+  "license": "MIT",
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "npm-publish": "npm run build && npm publish"
+  },
+  "dependencies": {
+    "@noble/ciphers": "^0.5.3",
+    "@noble/curves": "^1.4.0",
+    "@noble/hashes": "^1.4.0",
+    "@scure/bip39": "^1.3.0",
+    "@sqlite.org/sqlite-wasm": "^3.46.0-build1",
+    "@tanstack/react-query": "^5.40.0",
+    "comlink": "^4.4.1",
+    "react": "^18",
+    "socket.io-client": "^4.7.5",
+    "zod": "^3"
+  },
+  "peerDependencies": {
+    "react": "^18"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.3.3",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.34.2",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "typescript": "^5.4.5"
+  }
+}

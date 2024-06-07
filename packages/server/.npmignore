@@ -1,0 +1,7 @@
+src
+.dockerignore
+.eslintrc
+Dockerfile
+README.md
+tsconfig.json
+**.db
