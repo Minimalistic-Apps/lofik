@@ -8,4 +8,8 @@ Apps build with lofik can also work offline, store all pending updates locally a
 
 Currently, lofik consists of two components - tools for building [react app](https://github.com/pycan-jouza/lofik/blob/master/packages/react/README.md) and [sync server](https://github.com/pycan-jouza/lofik/blob/master/packages/server/README.md).
 
-How to build with each, follow the links right above.
+How to build with each, follow the links right above. Also, you can have a look at [examples](https://github.com/pycan-jouza/lofik/blob/master/examples) or at more complex open-source apps below.
+
+## Apps currently using lofik
+
+- [lofextra](https://lofextra.com)
