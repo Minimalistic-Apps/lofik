@@ -1,8 +1,12 @@
 {
   "name": "@lofik/server",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Node.js server library for syncing local-first apps.",
   "main": "dist/index.js",
+  "repository": {
+    "url": "https://github.com/pycan-jouza/lofik",
+    "directory": "packages/server"
+  },
   "keywords": [
     "local-first",
     "e2ee",

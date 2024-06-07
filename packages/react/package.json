@@ -1,10 +1,14 @@
 {
   "name": "@lofik/react",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "React library for building local-first apps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
   "types": "dist/index.d.ts",
+  "repository": {
+    "url": "https://github.com/pycan-jouza/lofik",
+    "directory": "packages/react"
+  },
   "keywords": [
     "local-first",
     "e2ee",
