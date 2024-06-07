@@ -1,6 +1,6 @@
 {
   "name": "@lofik/server",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Node.js server library for syncing local-first apps.",
   "main": "dist/index.js",
   "repository": {

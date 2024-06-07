@@ -6,7 +6,9 @@ Currently, there are 2 ways of running lofik server.
 
 ## Docker (recommended)
 
-`docker run -d --name lofik-server -p 8080:8080 -e ORIGIN=http://localhost:5000 -v /path-to-local-folder-to-store-your-db:/home/node/app/prisma/db pycan/lofik-server:latest`
+```
+docker run -d --name lofik-server -p 8080:8080 -e ORIGIN=http://localhost:5000 -v /path-to-local-folder-to-store-your-db:/home/node/app/prisma/db pycan/lofik-server:latest
+```
 
 Using the volume is important to persist the database with update messages.
 
