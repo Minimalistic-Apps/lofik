@@ -1,6 +1,6 @@
 import { Socket } from "socket.io";
 import { socketConnectionsMap } from "./connections";
-import { registerOnMessagesHandler } from "./handlers";
+import { registerFullSyncHandler, registerOnMessagesHandler } from "./handlers";
 import { httpServer } from "./http";
 import { io } from "./io";
 import { prisma } from "./prisma";
@@ -22,6 +22,10 @@ export const startLofikServer = () => {
     const socketId = socket.id;
 
     socket.on("messages", registerOnMessagesHandler(pubKeyHex, socketId));
+    socket.on(
+      "messages-full-sync",
+      registerFullSyncHandler(pubKeyHex, socketId)
+    );
 
     const pubKeyConnections = socketConnectionsMap.get(pubKeyHex);
 

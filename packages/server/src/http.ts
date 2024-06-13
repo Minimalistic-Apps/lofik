@@ -1,3 +1,3 @@
-import http from 'http'
+import http from "http";
 
-export const httpServer = http.createServer()
+export const httpServer = http.createServer();

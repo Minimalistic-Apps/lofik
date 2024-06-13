@@ -20,34 +20,47 @@ import {
 } from "./contexts";
 
 type Params = Omit<
-  UseMutationOptions<unknown, Error, GenerateDatabaseMutation, unknown>,
+  UseMutationOptions<
+    unknown,
+    Error,
+    GenerateDatabaseMutation | GenerateDatabaseMutation[],
+    unknown
+  >,
   "mutationFn"
-> & { shouldSync: boolean };
+> & { shouldSync: boolean; isFullSync?: boolean };
 
-export const useLofikMutation = ({ shouldSync, ...options }: Params) => {
+export const useLofikMutation = ({
+  shouldSync,
+  isFullSync = false,
+  ...options
+}: Params) => {
   const { db } = useDatabaseContext();
   const { hlc, setHlc } = useHlcContext();
   const { sync } = useServerSync();
 
   const mutate = useCallback(
-    async (mutation: GenerateDatabaseMutation) => {
+    async (mutation: GenerateDatabaseMutation | GenerateDatabaseMutation[]) => {
       const updatedHlc = inc(hlc, getUnixTimestamp());
 
       setHlc(updatedHlc);
 
-      const sql =
-        mutation.operation === DatabaseMutationOperation.Upsert
-          ? utils.generateUpsert(mutation, updatedHlc)
-          : utils.generateDelete(mutation, updatedHlc);
+      const mutations = Array.isArray(mutation) ? mutation : [mutation];
 
-      // @ts-expect-error
-      await db.exec(sql);
+      for (const mutation of mutations) {
+        const sql =
+          mutation.operation === DatabaseMutationOperation.Upsert
+            ? utils.generateUpsert(mutation, updatedHlc)
+            : utils.generateDelete(mutation, updatedHlc);
+
+        // @ts-expect-error
+        await db.exec(sql);
+      }
 
       if (shouldSync) {
-        sync(mutation, updatedHlc);
+        sync(mutations, updatedHlc, isFullSync);
       }
     },
-    [db, hlc, setHlc, shouldSync, sync]
+    [db, hlc, setHlc, shouldSync, sync, isFullSync]
   );
 
   return useMutation({ ...options, mutationFn: mutate });
@@ -59,24 +72,37 @@ const useServerSync = () => {
   const { socket } = useWebsocketContext();
 
   const sync = useCallback(
-    async (mutation: GenerateDatabaseMutation, hlc: HLC) => {
+    async (
+      mutations: GenerateDatabaseMutation[],
+      hlc: HLC,
+      isFullSync: boolean
+    ) => {
       const nonce = randomBytes(24);
 
       const chacha = xchacha20poly1305(sha256(privKey), nonce);
 
-      const encryptedMutation = chacha.encrypt(
-        utf8ToBytes(JSON.stringify(mutation))
-      );
+      const messages: Message[] = [];
 
-      const message: Message = {
-        pubKeyHex,
-        payload: bytesToHex(encryptedMutation),
-        nonce: bytesToHex(nonce),
-        hlc: serialize(hlc),
-      };
+      for (const mutation of mutations) {
+        const encryptedMutation = chacha.encrypt(
+          utf8ToBytes(JSON.stringify(mutation))
+        );
+
+        messages.push({
+          pubKeyHex,
+          payload: bytesToHex(encryptedMutation),
+          nonce: bytesToHex(nonce),
+          hlc: serialize(hlc),
+        });
+      }
 
       try {
-        await socket.timeout(3000).emitWithAck("messages", [message]);
+        await socket
+          .timeout(3000)
+          .emitWithAck(
+            isFullSync ? "messages-full-sync" : "messages",
+            messages
+          );
       } catch (err) {
         console.error(err);
 
@@ -85,7 +111,7 @@ const useServerSync = () => {
             operation: DatabaseMutationOperation.Upsert,
             tableName: "pendingUpdates",
             columnDataMap: {
-              message: JSON.stringify(message),
+              message: JSON.stringify(messages),
               createdAt: getUnixTimestamp(),
             },
           },

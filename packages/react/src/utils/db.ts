@@ -107,7 +107,7 @@ export const pushPendingUpdates = async ({
   try {
     await socket.timeout(3000).emitWithAck(
       "messages",
-      pendingUpdates.map((update) =>
+      pendingUpdates.flatMap((update) =>
         JSON.parse(z.string().parse(update.message))
       )
     );

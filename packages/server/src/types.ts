@@ -1,4 +1,4 @@
 export type SocketConnection = {
-  socketId: string
-  deviceId: string
-}
+  socketId: string;
+  deviceId: string;
+};
