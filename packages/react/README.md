@@ -6,7 +6,9 @@ To see lofik being used in a demo app, have a look at the [examples](https://git
 
 > [!IMPORTANT]
 > To make persistent storage (OPFS) work, these two headers are required
-> `Cross-Origin-Opener-Policy: same-origin` > `Cross-Origin-Embedder-Policy: require-corp`
+>
+> - `Cross-Origin-Opener-Policy: same-origin`
+> - `Cross-Origin-Embedder-Policy: require-corp`
 
 Use `LofikProvider` at the top of your app:
 
