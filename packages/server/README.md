@@ -1,6 +1,6 @@
 # lofik (sync) server
 
-You can use the public lofik server at `api.lofik.com` (it can't read your data) or run your own.
+You can use the public lofik server at `lofik.jouzina.com` (it can't read your data) or run your own.
 
 Currently, there are 2 ways of running lofik server.
 

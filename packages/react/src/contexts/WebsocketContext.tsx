@@ -40,7 +40,7 @@ export const WebsocketProvider = ({
 
   useEffect(() => {
     setSocket(
-      io(websocketServerUrl || "wss://api.lofik.com", {
+      io(websocketServerUrl || "wss://lofik.jouzina.com", {
         autoConnect: false,
       })
     );
