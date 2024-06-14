@@ -19,10 +19,10 @@ function App() {
         );
       `,
       ]}
-      //  seed={[]}
+      // seed={[]}
       loader={<div>loading..</div>}
-      //  migrate={async () => {}}
-      websocketServerUrl="ws://localhost:8080"
+      // migrate={async () => {}}
+      // websocketServerUrl="ws://localhost:8080"
     >
       <Mnemonic />
       <Todos />
