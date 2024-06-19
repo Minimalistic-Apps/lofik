@@ -98,13 +98,17 @@ const useServerSync = () => {
 
       try {
         await socket
-          .timeout(3000)
+          .timeout(10000)
           .emitWithAck(
             isFullSync ? "messages-full-sync" : "messages",
             messages
           );
       } catch (err) {
         console.error(err);
+
+        if (isFullSync) {
+          return;
+        }
 
         const sql = utils.generateUpsert(
           {

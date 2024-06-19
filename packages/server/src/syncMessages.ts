@@ -22,7 +22,10 @@ export const syncMessages = async ({
   );
 
   try {
-    await io.to(socketId).timeout(3000).emitWithAck("messages", sortedMessages);
+    await io
+      .to(socketId)
+      .timeout(Number(process.env.SYNC_TIMEOUT_MS) || 10000)
+      .emitWithAck("messages", sortedMessages);
 
     console.log(`pushing ${messagesToSync.length} to ${deviceId}`);
 
