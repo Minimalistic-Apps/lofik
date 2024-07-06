@@ -16,7 +16,7 @@ model Message {
   payload        String
   nonce          String
   deviceId       String
-  hlc            String
   ackedDeviceIds String
+  ts             DateTime
   createdAt      DateTime @default(now())
 }

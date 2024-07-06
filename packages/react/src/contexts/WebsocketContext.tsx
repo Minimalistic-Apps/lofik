@@ -3,15 +3,9 @@ import { bytesToUtf8, hexToBytes } from "@noble/ciphers/utils";
 import { sha256 } from "@noble/hashes/sha256";
 import { ReactNode, createContext, useEffect, useState } from "react";
 import { Socket, io } from "socket.io-client";
-import {
-  useAccountContext,
-  useDatabaseContext,
-  useHlcContext,
-} from "../hooks/contexts";
+import { useAccountContext, useDatabaseContext } from "../hooks/contexts";
 import { useLofikQueryClient } from "../hooks/useLofikQueryClient";
-import { getUnixTimestamp } from "../utils/dates";
 import { handleRemoteDatabaseMutation, pushPendingUpdates } from "../utils/db";
-import { deserialize, recv } from "../utils/hlc";
 import { generateDatabaseMutationSchema } from "../validators/db";
 import { messagesSchema } from "../validators/messages";
 
@@ -35,7 +29,6 @@ export const WebsocketProvider = ({
   const [socket, setSocket] = useState<Socket>();
   const { privKey, pubKeyHex, deviceId } = useAccountContext();
   const { db } = useDatabaseContext();
-  const { hlc, setHlc } = useHlcContext();
   const queryClient = useLofikQueryClient();
 
   useEffect(() => {
@@ -73,9 +66,7 @@ export const WebsocketProvider = ({
 
     const onMessages = async (messages: unknown, ack: () => void) => {
       for (const message of messagesSchema.parse(messages)) {
-        const messageHlc = deserialize(message.hlc);
-
-        if (messageHlc.deviceId === deviceId) {
+        if (message.deviceId === deviceId) {
           continue;
         }
 
@@ -92,11 +83,9 @@ export const WebsocketProvider = ({
 
         await handleRemoteDatabaseMutation({
           db,
-          hlc: messageHlc,
+          ts: message.ts,
           mutation: validatedData,
         });
-
-        setHlc(recv(hlc, messageHlc, getUnixTimestamp()));
       }
 
       ack();
@@ -109,7 +98,7 @@ export const WebsocketProvider = ({
     return () => {
       socket.off("messages", onMessages);
     };
-  }, [db, hlc, setHlc, privKey, deviceId, queryClient, socket]);
+  }, [db, privKey, deviceId, queryClient, socket]);
 
   return (
     <WebsocketContext.Provider value={{ socket } as WebsocketContext}>

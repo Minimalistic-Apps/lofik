@@ -1,7 +1,6 @@
 import { useContext } from "react";
 import { AccountContext } from "../contexts/AccountContext";
 import { DatabaseContext } from "../contexts/DatabaseContext";
-import { HlcContext } from "../contexts/HlcContext";
 import { WebsocketContext } from "../contexts/WebsocketContext";
 
 export const useDatabaseContext = () => {
@@ -19,16 +18,6 @@ export const useAccountContext = () => {
 
   if (!ctx) {
     throw new Error("Not inside AccountContext!");
-  }
-
-  return ctx;
-};
-
-export const useHlcContext = () => {
-  const ctx = useContext(HlcContext);
-
-  if (!ctx) {
-    throw new Error("Not inside HlcContext!");
   }
 
   return ctx;

@@ -3,7 +3,6 @@ import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, randomBytes, utf8ToBytes } from "@noble/hashes/utils";
 import { UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { HLC } from "../contexts/HlcContext";
 import {
   DatabaseMutationOperation,
   GenerateDatabaseMutation,
@@ -11,11 +10,9 @@ import {
 } from "../types";
 import { getUnixTimestamp } from "../utils/dates";
 import { utils } from "../utils/db";
-import { inc, serialize } from "../utils/hlc";
 import {
   useAccountContext,
   useDatabaseContext,
-  useHlcContext,
   useWebsocketContext,
 } from "./contexts";
 
@@ -35,46 +32,43 @@ export const useLofikMutation = ({
   ...options
 }: Params) => {
   const { db } = useDatabaseContext();
-  const { hlc, setHlc } = useHlcContext();
   const { sync } = useServerSync();
 
   const mutate = useCallback(
     async (mutation: GenerateDatabaseMutation | GenerateDatabaseMutation[]) => {
-      const updatedHlc = inc(hlc, getUnixTimestamp());
-
-      setHlc(updatedHlc);
+      const ts = getUnixTimestamp();
 
       const mutations = Array.isArray(mutation) ? mutation : [mutation];
 
       for (const mutation of mutations) {
         const sql =
           mutation.operation === DatabaseMutationOperation.Upsert
-            ? utils.generateUpsert(mutation, updatedHlc)
-            : utils.generateDelete(mutation, updatedHlc);
+            ? utils.generateUpsert(mutation, ts)
+            : utils.generateDelete(mutation, ts);
 
         // @ts-expect-error
         await db.exec(sql);
       }
 
       if (shouldSync) {
-        sync(mutations, updatedHlc, isFullSync);
+        sync(mutations, ts, isFullSync);
       }
     },
-    [db, hlc, setHlc, shouldSync, sync, isFullSync]
+    [db, shouldSync, sync, isFullSync]
   );
 
   return useMutation({ ...options, mutationFn: mutate });
 };
 
 const useServerSync = () => {
-  const { privKey, pubKeyHex } = useAccountContext();
+  const { privKey, pubKeyHex, deviceId } = useAccountContext();
   const { db } = useDatabaseContext();
   const { socket } = useWebsocketContext();
 
   const sync = useCallback(
     async (
       mutations: GenerateDatabaseMutation[],
-      hlc: HLC,
+      ts: number,
       isFullSync: boolean
     ) => {
       const nonce = randomBytes(24);
@@ -92,7 +86,8 @@ const useServerSync = () => {
           pubKeyHex,
           payload: bytesToHex(encryptedMutation),
           nonce: bytesToHex(nonce),
-          hlc: serialize(hlc),
+          deviceId,
+          ts,
         });
       }
 
@@ -119,14 +114,14 @@ const useServerSync = () => {
               createdAt: getUnixTimestamp(),
             },
           },
-          hlc
+          ts
         );
 
         // @ts-expect-error
         await db.exec(sql);
       }
     },
-    [privKey, pubKeyHex, db, socket]
+    [privKey, pubKeyHex, db, socket, deviceId]
   );
 
   return useMemo(() => ({ sync }), [sync]);

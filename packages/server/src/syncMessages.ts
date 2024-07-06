@@ -1,5 +1,4 @@
 import { Message } from "@prisma/client";
-import { cmp, deserialize } from "./hlc";
 import { io } from "./io";
 import { prisma } from "./prisma";
 import { SocketConnection } from "./types";
@@ -17,9 +16,9 @@ export const syncMessages = async ({
     return;
   }
 
-  const sortedMessages = messagesToSync.sort((a, b) =>
-    cmp(deserialize(a.hlc), deserialize(b.hlc))
-  );
+  const sortedMessages = messagesToSync
+    .map((m) => ({ ...m, ts: m.ts.getTime() }))
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 
   try {
     await io

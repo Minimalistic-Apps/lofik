@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, createContext } from "react";
 import { AccountProvider } from "./AccountContext";
 import { DatabaseProvider, DatabaseProviderProps } from "./DatabaseContext";
-import { HlcProvider } from "./HlcContext";
 import { WebsocketProvider } from "./WebsocketContext";
 
 const LofikContext = createContext({});
@@ -29,14 +28,12 @@ export const LofikProvider = ({
       <QueryClientProvider client={queryClient}>
         <DatabaseProvider loader={loader} {...dbProps}>
           <AccountProvider loader={loader}>
-            <HlcProvider>
-              <WebsocketProvider
-                loader={loader}
-                websocketServerUrl={websocketServerUrl}
-              >
-                {children}
-              </WebsocketProvider>
-            </HlcProvider>
+            <WebsocketProvider
+              loader={loader}
+              websocketServerUrl={websocketServerUrl}
+            >
+              {children}
+            </WebsocketProvider>
           </AccountProvider>
         </DatabaseProvider>
       </QueryClientProvider>

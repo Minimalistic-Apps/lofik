@@ -2,7 +2,6 @@ import { OpfsDatabase } from "@sqlite.org/sqlite-wasm";
 import { Remote } from "comlink";
 import { Socket } from "socket.io-client";
 import { z } from "zod";
-import { HLC } from "../contexts/HlcContext";
 import {
   DatabaseMutationOperation,
   GenerateDatabaseDelete,
@@ -17,7 +16,7 @@ export const utils = {
       columnDataMap,
       identifierColumn = "id",
     }: GenerateDatabaseUpsert,
-    hlc: HLC
+    ts: number
   ) => {
     const columns = Object.keys(columnDataMap);
     const values = Object.values(columnDataMap);
@@ -33,9 +32,9 @@ export const utils = {
     )}, updatedAt) values (${values
       .map((v) => (v === null ? "null" : `'${v}'`))
       .join(",")},'${
-      hlc.ts
+      ts
     }') on conflict (${identifierColumn}) do update set ${updateClause},updatedAt='${
-      hlc.ts
+      ts
     }';`;
 
     return sql;
@@ -46,9 +45,9 @@ export const utils = {
       identifierValue,
       identifierColumn = "id",
     }: GenerateDatabaseDelete,
-    hlc: HLC
+    ts: number
   ) => {
-    const sql = `update ${tableName} set deletedAt = '${hlc.ts}', updatedAt = '${hlc.ts}' where ${identifierColumn} = '${identifierValue}'`;
+    const sql = `update ${tableName} set deletedAt = '${ts}', updatedAt = '${ts}' where ${identifierColumn} = '${identifierValue}'`;
 
     return sql;
   },
@@ -56,11 +55,11 @@ export const utils = {
 
 export const handleRemoteDatabaseMutation = async ({
   db,
-  hlc,
+  ts,
   mutation,
 }: {
   db: Remote<OpfsDatabase>;
-  hlc: HLC;
+  ts: number;
   mutation: GenerateDatabaseMutation;
 }) => {
   const identifierColumn = mutation.identifierColumn || "id";
@@ -75,15 +74,15 @@ export const handleRemoteDatabaseMutation = async ({
 
   if (
     record[0] &&
-    new Date(z.number().parse(record[0].updatedAt)) >= new Date(hlc.ts)
+    new Date(z.number().parse(record[0].updatedAt)) >= new Date(ts)
   ) {
     return;
   }
 
   const sql =
     mutation.operation === DatabaseMutationOperation.Upsert
-      ? utils.generateUpsert(mutation, hlc)
-      : utils.generateDelete(mutation, hlc);
+      ? utils.generateUpsert(mutation, ts)
+      : utils.generateDelete(mutation, ts);
 
   // @ts-expect-error
   await db.exec(sql);

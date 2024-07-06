@@ -1,6 +1,5 @@
 import { Message } from "@prisma/client";
 import { socketConnectionsMap } from "./connections";
-import { deserialize } from "./hlc";
 import { prisma } from "./prisma";
 import { syncMessages } from "./syncMessages";
 import { PubKey, messagesSchema } from "./validators";
@@ -36,16 +35,17 @@ const handleNewMessages = async (rawMessages: unknown, ack: () => void) => {
   const createdMessages: Message[] = [];
 
   for (const message of messagesSchema.parse(rawMessages)) {
-    const { pubKeyHex, payload, nonce, hlc } = message;
+    const { pubKeyHex, payload, nonce, deviceId, ts } = message;
 
     const newMessage = await prisma.message.create({
       data: {
         payload,
         pubKeyHex,
         nonce,
-        deviceId: deserialize(hlc).deviceId,
-        hlc,
+        deviceId,
         ackedDeviceIds: "",
+        ts: new Date(ts),
+        createdAt: new Date(),
       },
     });
 
@@ -53,7 +53,7 @@ const handleNewMessages = async (rawMessages: unknown, ack: () => void) => {
   }
 
   console.log(
-    `received ${createdMessages.length} from ${deserialize(createdMessages[0].hlc).deviceId}`
+    `received ${createdMessages.length} from ${createdMessages[0].deviceId}`
   );
 
   ack();
