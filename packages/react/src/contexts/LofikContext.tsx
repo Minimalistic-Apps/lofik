@@ -28,10 +28,7 @@ export const LofikProvider = ({
       <QueryClientProvider client={queryClient}>
         <DatabaseProvider loader={loader} {...dbProps}>
           <AccountProvider loader={loader}>
-            <WebsocketProvider
-              loader={loader}
-              websocketServerUrl={websocketServerUrl}
-            >
+            <WebsocketProvider websocketServerUrl={websocketServerUrl}>
               {children}
             </WebsocketProvider>
           </AccountProvider>

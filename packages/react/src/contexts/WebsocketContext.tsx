@@ -10,30 +10,30 @@ import { generateDatabaseMutationSchema } from "../validators/db";
 import { messagesSchema } from "../validators/messages";
 
 type WebsocketContext = {
-  socket: Socket;
+  socket?: Socket;
 };
 
 export const WebsocketContext = createContext({} as WebsocketContext);
 
 type Props = {
   children: ReactNode;
-  loader?: ReactNode;
   websocketServerUrl?: string;
 };
 
-export const WebsocketProvider = ({
-  children,
-  loader,
-  websocketServerUrl,
-}: Props) => {
+export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
   const [socket, setSocket] = useState<Socket>();
   const { privKey, pubKeyHex, deviceId } = useAccountContext();
   const { db } = useDatabaseContext();
   const queryClient = useLofikQueryClient();
 
   useEffect(() => {
+    if (!websocketServerUrl) {
+      console.log("[lofik]: websocketServerUrl not set, syncing disabled..");
+      return;
+    }
+
     setSocket(
-      io(websocketServerUrl || "wss://lofik.jouzina.com", {
+      io(websocketServerUrl, {
         autoConnect: false,
       })
     );
@@ -102,7 +102,7 @@ export const WebsocketProvider = ({
 
   return (
     <WebsocketContext.Provider value={{ socket } as WebsocketContext}>
-      {!socket ? loader || null : children}
+      {children}
     </WebsocketContext.Provider>
   );
 };

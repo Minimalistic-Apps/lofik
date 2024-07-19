@@ -93,7 +93,7 @@ const useServerSync = () => {
 
       try {
         await socket
-          .timeout(10000)
+          ?.timeout(10000)
           .emitWithAck(
             isFullSync ? "messages-full-sync" : "messages",
             messages
