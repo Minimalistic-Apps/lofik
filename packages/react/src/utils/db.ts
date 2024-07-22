@@ -1,7 +1,6 @@
-import { OpfsDatabase } from "@sqlite.org/sqlite-wasm";
-import { Remote } from "comlink";
 import { Socket } from "socket.io-client";
 import { z } from "zod";
+import { sqlocal } from "../db/sqlocal";
 import {
   DatabaseMutationOperation,
   GenerateDatabaseDelete,
@@ -54,11 +53,9 @@ export const utils = {
 };
 
 export const handleRemoteDatabaseMutation = async ({
-  db,
   ts,
   mutation,
 }: {
-  db: Remote<OpfsDatabase>;
   ts: number;
   mutation: GenerateDatabaseMutation;
 }) => {
@@ -68,9 +65,8 @@ export const handleRemoteDatabaseMutation = async ({
       ? mutation.columnDataMap[identifierColumn]
       : mutation.identifierValue;
 
-  const record = await db.selectObjects(
-    `select * from ${mutation.tableName} where ${identifierColumn} = '${identifierValue}'`
-  );
+  const record =
+    await sqlocal.sql`select * from ${mutation.tableName} where ${identifierColumn} = '${identifierValue}'`;
 
   if (
     record[0] &&
@@ -84,20 +80,12 @@ export const handleRemoteDatabaseMutation = async ({
       ? utils.generateUpsert(mutation, ts)
       : utils.generateDelete(mutation, ts);
 
-  // @ts-expect-error
-  await db.exec(sql);
+  await sqlocal.sql(sql);
 };
 
-export const pushPendingUpdates = async ({
-  db,
-  socket,
-}: {
-  db: Remote<OpfsDatabase>;
-  socket: Socket;
-}) => {
-  const pendingUpdates = await db.selectObjects(
-    "select * from pendingUpdates order by id"
-  );
+export const pushPendingUpdates = async (socket: Socket) => {
+  const pendingUpdates =
+    await sqlocal.sql`select * from pendingUpdates order by id`;
 
   if (!pendingUpdates.length) {
     return;
@@ -112,8 +100,7 @@ export const pushPendingUpdates = async ({
     );
 
     for (const update of pendingUpdates) {
-      // @ts-expect-error
-      await db.exec(`delete from pendingUpdates where id = ${update.id}`);
+      await sqlocal.sql`delete from pendingUpdates where id = ${update.id}`;
     }
   } catch (err) {
     console.error(err);

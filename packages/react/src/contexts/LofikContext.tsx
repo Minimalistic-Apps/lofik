@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactNode, createContext } from "react";
+import { ReactNode, createContext, useEffect, useState } from "react";
+import { baseCreate } from "../db/baseCreate";
+import { baseSeed } from "../db/baseSeed";
+import { sqlocal } from "../db/sqlocal";
 import { AccountProvider } from "./AccountContext";
-import { DatabaseProvider, DatabaseProviderProps } from "./DatabaseContext";
 import { WebsocketProvider } from "./WebsocketContext";
 
 const LofikContext = createContext({});
@@ -9,7 +11,9 @@ const LofikContext = createContext({});
 type Props = {
   children: ReactNode;
   websocketServerUrl?: string;
-} & DatabaseProviderProps;
+  loader?: ReactNode;
+  databaseInit?: string[];
+};
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -21,18 +25,39 @@ export const LofikProvider = ({
   children,
   loader,
   websocketServerUrl,
-  ...dbProps
+  databaseInit,
 }: Props) => {
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const prepareDatabase = async () => {
+      await baseCreate();
+      await baseSeed();
+
+      if (databaseInit) {
+        for (const sql of databaseInit) {
+          await sqlocal.sql(sql);
+        }
+      }
+
+      setIsLoading(false);
+    };
+
+    prepareDatabase();
+  }, [databaseInit]);
+
+  if (isLoading) {
+    return loader || null;
+  }
+
   return (
     <LofikContext.Provider value={{}}>
       <QueryClientProvider client={queryClient}>
-        <DatabaseProvider loader={loader} {...dbProps}>
-          <AccountProvider loader={loader}>
-            <WebsocketProvider websocketServerUrl={websocketServerUrl}>
-              {children}
-            </WebsocketProvider>
-          </AccountProvider>
-        </DatabaseProvider>
+        <AccountProvider loader={loader}>
+          <WebsocketProvider websocketServerUrl={websocketServerUrl}>
+            {children}
+          </WebsocketProvider>
+        </AccountProvider>
       </QueryClientProvider>
     </LofikContext.Provider>
   );

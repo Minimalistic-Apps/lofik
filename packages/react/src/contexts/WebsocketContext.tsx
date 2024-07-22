@@ -3,7 +3,7 @@ import { bytesToUtf8, hexToBytes } from "@noble/ciphers/utils";
 import { sha256 } from "@noble/hashes/sha256";
 import { ReactNode, createContext, useEffect, useState } from "react";
 import { Socket, io } from "socket.io-client";
-import { useAccountContext, useDatabaseContext } from "../hooks/contexts";
+import { useAccountContext } from "../hooks/contexts";
 import { useLofikQueryClient } from "../hooks/useLofikQueryClient";
 import { handleRemoteDatabaseMutation, pushPendingUpdates } from "../utils/db";
 import { generateDatabaseMutationSchema } from "../validators/db";
@@ -23,7 +23,6 @@ type Props = {
 export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
   const [socket, setSocket] = useState<Socket>();
   const { privKey, pubKeyHex, deviceId } = useAccountContext();
-  const { db } = useDatabaseContext();
   const queryClient = useLofikQueryClient();
 
   useEffect(() => {
@@ -44,7 +43,7 @@ export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
       return;
     }
 
-    socket.on("connect", () => pushPendingUpdates({ db, socket }));
+    socket.on("connect", () => pushPendingUpdates(socket));
 
     if (socket.connected) {
       socket.disconnect();
@@ -55,9 +54,9 @@ export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
     socket.connect();
 
     return () => {
-      socket.off("connect", () => pushPendingUpdates({ db, socket }));
+      socket.off("connect", () => pushPendingUpdates(socket));
     };
-  }, [pubKeyHex, db, deviceId, socket]);
+  }, [pubKeyHex, deviceId, socket]);
 
   useEffect(() => {
     if (!socket) {
@@ -82,7 +81,6 @@ export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
         const validatedData = generateDatabaseMutationSchema.parse(data);
 
         await handleRemoteDatabaseMutation({
-          db,
           ts: message.ts,
           mutation: validatedData,
         });
@@ -98,7 +96,7 @@ export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
     return () => {
       socket.off("messages", onMessages);
     };
-  }, [db, privKey, deviceId, queryClient, socket]);
+  }, [privKey, deviceId, queryClient, socket]);
 
   return (
     <WebsocketContext.Provider value={{ socket } as WebsocketContext}>

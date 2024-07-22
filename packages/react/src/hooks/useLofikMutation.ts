@@ -3,6 +3,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, randomBytes, utf8ToBytes } from "@noble/hashes/utils";
 import { UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
+import { sqlocal } from "../db/sqlocal";
 import {
   DatabaseMutationOperation,
   GenerateDatabaseMutation,
@@ -10,11 +11,7 @@ import {
 } from "../types";
 import { getUnixTimestamp } from "../utils/dates";
 import { utils } from "../utils/db";
-import {
-  useAccountContext,
-  useDatabaseContext,
-  useWebsocketContext,
-} from "./contexts";
+import { useAccountContext, useWebsocketContext } from "./contexts";
 
 type Params = Omit<
   UseMutationOptions<
@@ -31,7 +28,6 @@ export const useLofikMutation = ({
   isFullSync = false,
   ...options
 }: Params) => {
-  const { db } = useDatabaseContext();
   const { sync } = useServerSync();
 
   const mutate = useCallback(
@@ -46,15 +42,14 @@ export const useLofikMutation = ({
             ? utils.generateUpsert(mutation, ts)
             : utils.generateDelete(mutation, ts);
 
-        // @ts-expect-error
-        await db.exec(sql);
+        await sqlocal.sql(sql);
       }
 
       if (shouldSync) {
         sync(mutations, ts, isFullSync);
       }
     },
-    [db, shouldSync, sync, isFullSync]
+    [shouldSync, sync, isFullSync]
   );
 
   return useMutation({ ...options, mutationFn: mutate });
@@ -62,7 +57,6 @@ export const useLofikMutation = ({
 
 const useServerSync = () => {
   const { privKey, pubKeyHex, deviceId } = useAccountContext();
-  const { db } = useDatabaseContext();
   const { socket } = useWebsocketContext();
 
   const sync = useCallback(
@@ -117,11 +111,10 @@ const useServerSync = () => {
           ts
         );
 
-        // @ts-expect-error
-        await db.exec(sql);
+        await sqlocal.sql(sql);
       }
     },
-    [privKey, pubKeyHex, db, socket, deviceId]
+    [privKey, pubKeyHex, socket, deviceId]
   );
 
   return useMemo(() => ({ sync }), [sync]);

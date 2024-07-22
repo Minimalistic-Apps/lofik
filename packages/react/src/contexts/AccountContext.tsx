@@ -23,13 +23,13 @@ type Props = {
 
 export const AccountProvider = ({ children, loader }: Props) => {
   const { data: accountsData } = useLofikQuery({
-    sql: "select * from accounts order by id desc limit 1",
+    sql: "SELECT * FROM accounts ORDER BY id DESC LIMIT 1",
     schema: accountsSchema,
     queryKey: [QueryKeys.GET_ACCOUNT],
   });
 
   const { data: deviceData } = useLofikQuery({
-    sql: "select * from device",
+    sql: "SELECT * FROM device",
     schema: devicesSchema,
     queryKey: [QueryKeys.GET_DEVICE],
   });

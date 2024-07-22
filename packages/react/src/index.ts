@@ -1,10 +1,9 @@
-import { OpfsDatabase as OpfsDatabaseLib } from "@sqlite.org/sqlite-wasm";
-
-export { Remote } from "comlink";
+export { SQLocal } from "sqlocal";
 export { LofikProvider } from "./contexts/LofikContext";
+export { sqlocal } from "./db/sqlocal";
+export { useDatabaseActions } from "./hooks/useDatabaseActions";
 export { useLofikAccount } from "./hooks/useLofikAccount";
 export { useLofikAccountActions } from "./hooks/useLofikAccountActions";
-export { useLofikDatabase } from "./hooks/useLofikDatabase";
 export { useLofikMutation } from "./hooks/useLofikMutation";
 export { useLofikQuery } from "./hooks/useLofikQuery";
 export { useLofikQueryClient } from "./hooks/useLofikQueryClient";
@@ -14,5 +13,3 @@ export {
   GenerateDatabaseMutation,
   GenerateDatabaseUpsert,
 } from "./types";
-
-export type OpfsDatabase = OpfsDatabaseLib;

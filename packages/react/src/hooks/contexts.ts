@@ -1,17 +1,6 @@
 import { useContext } from "react";
 import { AccountContext } from "../contexts/AccountContext";
-import { DatabaseContext } from "../contexts/DatabaseContext";
 import { WebsocketContext } from "../contexts/WebsocketContext";
-
-export const useDatabaseContext = () => {
-  const ctx = useContext(DatabaseContext);
-
-  if (!ctx) {
-    throw new Error("Not inside DatabaseContext!");
-  }
-
-  return ctx;
-};
 
 export const useAccountContext = () => {
   const ctx = useContext(AccountContext);

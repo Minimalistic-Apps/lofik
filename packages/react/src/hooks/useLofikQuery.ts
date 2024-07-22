@@ -5,7 +5,7 @@ import {
 } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { TypeOf, ZodSchema, optional } from "zod";
-import { useDatabaseContext } from "./contexts";
+import { sqlocal } from "../db/sqlocal";
 
 type Params<T extends ZodSchema> = Omit<
   UndefinedInitialDataOptions<TypeOf<T>, Error, TypeOf<T>, QueryKey>,
@@ -17,8 +17,7 @@ export const useLofikQuery = <T extends ZodSchema>({
   schema,
   ...options
 }: Params<T>) => {
-  const { db } = useDatabaseContext();
-  const query = useQuery({ ...options, queryFn: () => db.selectObjects(sql) });
+  const query = useQuery({ ...options, queryFn: () => sqlocal.sql(sql) });
 
   const validatedData = useMemo(
     () => optional(schema).parse(query.data),
