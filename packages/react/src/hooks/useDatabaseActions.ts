@@ -23,9 +23,11 @@ export const useDatabaseActions = () => {
     async (file: File | Blob | ArrayBuffer | Uint8Array) => {
       await sqlocal.overwriteDatabaseFile(file);
 
-      await sqlocal.sql`DELETE FROM device`;
+      await sqlocal.sql("DELETE FROM device");
 
-      await sqlocal.sql`insert into device (id, createdAt) values ('${crypto.randomUUID()}', strftime('%s', 'now')*1000)`;
+      await sqlocal.sql(
+        `INSERT INTO device (id, createdAt) VALUES ('${crypto.randomUUID()}', strftime('%s', 'now')*1000)`
+      );
 
       await queryClient.invalidateQueries();
     },

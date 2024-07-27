@@ -26,13 +26,13 @@ export const utils = {
       )
       .join(",");
 
-    const sql = `insert into ${tableName} (${columns.join(
+    const sql = `INSERT INTO ${tableName} (${columns.join(
       ","
-    )}, updatedAt) values (${values
+    )}, updatedAt) VALUES (${values
       .map((v) => (v === null ? "null" : `'${v}'`))
       .join(",")},'${
       ts
-    }') on conflict (${identifierColumn}) do update set ${updateClause},updatedAt='${
+    }') ON CONFLICT (${identifierColumn}) DO UPDATE SET ${updateClause},updatedAt='${
       ts
     }';`;
 
@@ -46,7 +46,7 @@ export const utils = {
     }: GenerateDatabaseDelete,
     ts: number
   ) => {
-    const sql = `update ${tableName} set deletedAt = '${ts}', updatedAt = '${ts}' where ${identifierColumn} = '${identifierValue}'`;
+    const sql = `UPDATE ${tableName} SET deletedAt = '${ts}', updatedAt = '${ts}' WHERE ${identifierColumn} = '${identifierValue}'`;
 
     return sql;
   },
@@ -65,8 +65,9 @@ export const handleRemoteDatabaseMutation = async ({
       ? mutation.columnDataMap[identifierColumn]
       : mutation.identifierValue;
 
-  const record =
-    await sqlocal.sql`select * from ${mutation.tableName} where ${identifierColumn} = '${identifierValue}'`;
+  const record = await sqlocal.sql(
+    `SELECT * FROM ${mutation.tableName} WHERE ${identifierColumn} = '${identifierValue}'`
+  );
 
   if (
     record[0] &&
@@ -84,8 +85,9 @@ export const handleRemoteDatabaseMutation = async ({
 };
 
 export const pushPendingUpdates = async (socket: Socket) => {
-  const pendingUpdates =
-    await sqlocal.sql`select * from pendingUpdates order by id`;
+  const pendingUpdates = await sqlocal.sql(
+    "SELECT * FROM pendingUpdates ORDER BY id"
+  );
 
   if (!pendingUpdates.length) {
     return;
@@ -100,7 +102,7 @@ export const pushPendingUpdates = async (socket: Socket) => {
     );
 
     for (const update of pendingUpdates) {
-      await sqlocal.sql`delete from pendingUpdates where id = ${update.id}`;
+      await sqlocal.sql(`DELETE FROM pendingUpdates WHERE id = ${update.id}`);
     }
   } catch (err) {
     console.error(err);
