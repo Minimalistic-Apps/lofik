@@ -5,11 +5,17 @@ import {
   DatabaseMutationOperation,
   GenerateDatabaseDelete,
   GenerateDatabaseMutation,
+  GenerateDatabaseSort,
   GenerateDatabaseUpsert,
 } from "../types";
 
-export const utils = {
-  generateUpsert: (
+export const utils: Record<
+  DatabaseMutationOperation,
+  // todo fix
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (operation: any, ts: number) => string
+> = {
+  [DatabaseMutationOperation.Upsert]: (
     {
       tableName,
       columnDataMap,
@@ -22,14 +28,14 @@ export const utils = {
 
     const updateClause = columns
       .map((column, i) =>
-        values[i] === null ? `${column}=null` : `${column}='${values[i]}'`
+        values[i] === null ? `${column}=NULL` : `${column}='${values[i]}'`
       )
       .join(",");
 
     const sql = `INSERT INTO ${tableName} (${columns.join(
       ","
     )}, updatedAt) VALUES (${values
-      .map((v) => (v === null ? "null" : `'${v}'`))
+      .map((v) => (v === null ? "NULL" : `'${v}'`))
       .join(",")},'${
       ts
     }') ON CONFLICT (${identifierColumn}) DO UPDATE SET ${updateClause},updatedAt='${
@@ -38,7 +44,7 @@ export const utils = {
 
     return sql;
   },
-  generateDelete: (
+  [DatabaseMutationOperation.Delete]: (
     {
       tableName,
       identifierValue,
@@ -47,6 +53,30 @@ export const utils = {
     ts: number
   ) => {
     const sql = `UPDATE ${tableName} SET deletedAt = '${ts}', updatedAt = '${ts}' WHERE ${identifierColumn} = '${identifierValue}'`;
+
+    return sql;
+  },
+  [DatabaseMutationOperation.Sort]: (
+    {
+      tableName,
+      identifierValue,
+      identifierColumn = "id",
+      sortColumn = "sortOrder",
+      order,
+    }: GenerateDatabaseSort,
+    ts: number
+  ) => {
+    const sql = `
+      UPDATE ${tableName} SET updatedAt = '${ts}', 
+        ${sortColumn} = CASE 
+          WHEN ${identifierColumn} = '${identifierValue}' THEN ${order}
+          WHEN ${sortColumn} >= ${order} AND ${identifierColumn} <> '${identifierValue}' THEN ${sortColumn} + 1
+          ELSE ${sortColumn}
+        END
+      WHERE ${identifierColumn} = '${identifierValue}' 
+        OR (${sortColumn} >= ${order} AND ${identifierColumn} <> '${identifierValue}' 
+          AND deletedAt IS NULL)
+    `;
 
     return sql;
   },
@@ -76,10 +106,7 @@ export const handleRemoteDatabaseMutation = async ({
     return;
   }
 
-  const sql =
-    mutation.operation === DatabaseMutationOperation.Upsert
-      ? utils.generateUpsert(mutation, ts)
-      : utils.generateDelete(mutation, ts);
+  const sql = utils[mutation.operation](mutation, ts);
 
   await sqlocal.sql(sql);
 };

@@ -18,7 +18,16 @@ export const generateDatabaseDeleteSchema =
     identifierValue: z.union([z.number(), z.string()]),
   });
 
+export const generateDatabaseSortSchema =
+  generateDatabaseMutationBaseSchema.extend({
+    operation: z.literal(DatabaseMutationOperation.Sort),
+    sortColumn: z.string().optional(),
+    identifierValue: z.union([z.number(), z.string()]),
+    order: z.number(),
+  });
+
 export const generateDatabaseMutationSchema = z.union([
   generateDatabaseUpsertSchema,
   generateDatabaseDeleteSchema,
+  generateDatabaseSortSchema,
 ]);

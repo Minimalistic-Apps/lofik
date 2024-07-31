@@ -1,6 +1,6 @@
 {
   "name": "@lofik/react",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "description": "React library for building local-first apps.",
   "main": "dist/index.js",
   "source": "src/index.ts",

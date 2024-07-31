@@ -37,10 +37,7 @@ export const useLofikMutation = ({
       const mutations = Array.isArray(mutation) ? mutation : [mutation];
 
       for (const mutation of mutations) {
-        const sql =
-          mutation.operation === DatabaseMutationOperation.Upsert
-            ? utils.generateUpsert(mutation, ts)
-            : utils.generateDelete(mutation, ts);
+        const sql = utils[mutation.operation](mutation, ts);
 
         await sqlocal.sql(sql);
       }
@@ -99,7 +96,7 @@ const useServerSync = () => {
           return;
         }
 
-        const sql = utils.generateUpsert(
+        const sql = utils.Upsert(
           {
             operation: DatabaseMutationOperation.Upsert,
             tableName: "pendingUpdates",

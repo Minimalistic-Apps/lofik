@@ -11,5 +11,6 @@ export {
   DatabaseMutationOperation,
   GenerateDatabaseDelete,
   GenerateDatabaseMutation,
+  GenerateDatabaseSort,
   GenerateDatabaseUpsert,
 } from "./types";

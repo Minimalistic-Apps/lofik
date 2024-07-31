@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, createContext, useEffect, useState } from "react";
+import { SQLocal } from "sqlocal";
 import { baseCreate } from "../db/baseCreate";
 import { baseSeed } from "../db/baseSeed";
 import { sqlocal } from "../db/sqlocal";
@@ -13,6 +14,7 @@ type Props = {
   websocketServerUrl?: string;
   loader?: ReactNode;
   databaseInit?: string[];
+  runMigrations?: (sqlocal: SQLocal) => Promise<void>;
 };
 
 const queryClient = new QueryClient({
@@ -26,6 +28,7 @@ export const LofikProvider = ({
   loader,
   websocketServerUrl,
   databaseInit,
+  runMigrations,
 }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,11 +43,13 @@ export const LofikProvider = ({
         }
       }
 
+      await runMigrations?.(sqlocal);
+
       setIsLoading(false);
     };
 
     prepareDatabase();
-  }, [databaseInit]);
+  }, [databaseInit, runMigrations]);
 
   if (isLoading) {
     return loader || null;
