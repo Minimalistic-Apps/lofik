@@ -1,6 +1,6 @@
 {
   "name": "@lofik/react",
-  "version": "2.0.4",
+  "version": "2.0.5",
   "description": "React library for building local-first apps.",
   "main": "dist/index.js",
   "source": "src/index.ts",
@@ -35,10 +35,10 @@
     "@noble/curves": "^1.4.2",
     "@noble/hashes": "^1.4.0",
     "@scure/bip39": "^1.3.0",
-    "@tanstack/react-query": "^5.51.9",
+    "@tanstack/react-query": "^5.51.16",
     "react": "^18.3.1",
     "socket.io-client": "^4.7.5",
-    "sqlocal": "^0.10.2",
+    "sqlocal": "^0.11.1",
     "zod": "^3.23.8"
   },
   "devDependencies": {
