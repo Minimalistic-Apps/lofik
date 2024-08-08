@@ -12,10 +12,6 @@ export const syncMessages = async ({
   messagesToSync,
   socketConnection: { deviceId, socketId },
 }: MessagesToSyncParams) => {
-  if (!messagesToSync.length) {
-    return;
-  }
-
   const sortedMessages = messagesToSync
     .map((m) => ({ ...m, ts: m.ts.getTime() }))
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());

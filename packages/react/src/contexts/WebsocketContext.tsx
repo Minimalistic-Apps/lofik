@@ -3,6 +3,8 @@ import { bytesToUtf8, hexToBytes } from "@noble/ciphers/utils";
 import { sha256 } from "@noble/hashes/sha256";
 import { ReactNode, createContext, useEffect, useState } from "react";
 import { Socket, io } from "socket.io-client";
+import { SQLocal } from "sqlocal";
+import { sqlocal } from "../db/sqlocal";
 import { useAccountContext } from "../hooks/contexts";
 import { useLofikQueryClient } from "../hooks/useLofikQueryClient";
 import { handleRemoteDatabaseMutation, pushPendingUpdates } from "../utils/db";
@@ -18,12 +20,19 @@ export const WebsocketContext = createContext({} as WebsocketContext);
 type Props = {
   children: ReactNode;
   websocketServerUrl?: string;
+  onInitialRemoteUpdatesReceived?: (sqlocal: SQLocal) => Promise<void>;
 };
 
-export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
+export const WebsocketProvider = ({
+  children,
+  websocketServerUrl,
+  onInitialRemoteUpdatesReceived,
+}: Props) => {
   const [socket, setSocket] = useState<Socket>();
   const { privKey, pubKeyHex, deviceId } = useAccountContext();
   const queryClient = useLofikQueryClient();
+  const [initialRemoteUpdatesReceived, setInitialRemoteUpdatesReceived] =
+    useState(false);
 
   useEffect(() => {
     if (!websocketServerUrl) {
@@ -89,6 +98,8 @@ export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
       ack();
 
       await queryClient.invalidateQueries();
+
+      setInitialRemoteUpdatesReceived(true);
     };
 
     socket.on("messages", onMessages);
@@ -97,6 +108,12 @@ export const WebsocketProvider = ({ children, websocketServerUrl }: Props) => {
       socket.off("messages", onMessages);
     };
   }, [privKey, deviceId, queryClient, socket]);
+
+  useEffect(() => {
+    if (initialRemoteUpdatesReceived) {
+      onInitialRemoteUpdatesReceived?.(sqlocal);
+    }
+  }, [initialRemoteUpdatesReceived, onInitialRemoteUpdatesReceived]);
 
   return (
     <WebsocketContext.Provider value={{ socket } as WebsocketContext}>

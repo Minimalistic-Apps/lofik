@@ -15,6 +15,7 @@ type Props = {
   loader?: ReactNode;
   databaseInit?: string[];
   runMigrations?: (sqlocal: SQLocal) => Promise<void>;
+  onInitialRemoteUpdatesReceived?: (sqlocal: SQLocal) => Promise<void>;
 };
 
 const queryClient = new QueryClient({
@@ -29,6 +30,7 @@ export const LofikProvider = ({
   websocketServerUrl,
   databaseInit,
   runMigrations,
+  onInitialRemoteUpdatesReceived,
 }: Props) => {
   const [isLoading, setIsLoading] = useState(true);
 
@@ -59,7 +61,10 @@ export const LofikProvider = ({
     <LofikContext.Provider value={{}}>
       <QueryClientProvider client={queryClient}>
         <AccountProvider loader={loader}>
-          <WebsocketProvider websocketServerUrl={websocketServerUrl}>
+          <WebsocketProvider
+            websocketServerUrl={websocketServerUrl}
+            onInitialRemoteUpdatesReceived={onInitialRemoteUpdatesReceived}
+          >
             {children}
           </WebsocketProvider>
         </AccountProvider>
