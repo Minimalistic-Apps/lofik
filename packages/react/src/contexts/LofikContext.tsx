@@ -4,6 +4,7 @@ import { SQLocal } from "sqlocal";
 import { baseCreate } from "../db/baseCreate";
 import { baseSeed } from "../db/baseSeed";
 import { sqlocal } from "../db/sqlocal";
+import { GenerateDatabaseMutation } from "../types";
 import { AccountProvider } from "./AccountContext";
 import { WebsocketProvider } from "./WebsocketContext";
 
@@ -15,10 +16,16 @@ type Props = {
   loader?: ReactNode;
   databaseInit?: string[];
   runMigrations?: (sqlocal: SQLocal) => Promise<void>;
-  onInitialRemoteUpdatesReceived?: (sqlocal: SQLocal) => Promise<void>;
+  onInitialRemoteUpdatesReceived?: (
+    sqlocal: SQLocal,
+    { pubKeyHex, deviceId }: { pubKeyHex: string; deviceId: string }
+  ) => Promise<{
+    mutations: GenerateDatabaseMutation[];
+    onSuccess?: () => void;
+  }>;
 };
 
-const queryClient = new QueryClient({
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: { refetchOnReconnect: false, refetchOnWindowFocus: false },
   },

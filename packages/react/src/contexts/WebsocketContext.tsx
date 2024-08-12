@@ -6,7 +6,9 @@ import { Socket, io } from "socket.io-client";
 import { SQLocal } from "sqlocal";
 import { sqlocal } from "../db/sqlocal";
 import { useAccountContext } from "../hooks/contexts";
+import { useLofikMutation } from "../hooks/useLofikMutation";
 import { useLofikQueryClient } from "../hooks/useLofikQueryClient";
+import { GenerateDatabaseMutation } from "../types";
 import { handleRemoteDatabaseMutation, pushPendingUpdates } from "../utils/db";
 import { generateDatabaseMutationSchema } from "../validators/db";
 import { messagesSchema } from "../validators/messages";
@@ -20,7 +22,13 @@ export const WebsocketContext = createContext({} as WebsocketContext);
 type Props = {
   children: ReactNode;
   websocketServerUrl?: string;
-  onInitialRemoteUpdatesReceived?: (sqlocal: SQLocal) => Promise<void>;
+  onInitialRemoteUpdatesReceived?: (
+    sqlocal: SQLocal,
+    { pubKeyHex, deviceId }: { pubKeyHex: string; deviceId: string }
+  ) => Promise<{
+    mutations: GenerateDatabaseMutation[];
+    onSuccess?: () => void;
+  }>;
 };
 
 export const WebsocketProvider = ({
@@ -33,6 +41,8 @@ export const WebsocketProvider = ({
   const queryClient = useLofikQueryClient();
   const [initialRemoteUpdatesReceived, setInitialRemoteUpdatesReceived] =
     useState(false);
+
+  const { mutateAsync } = useLofikMutation({ shouldSync: true, socket });
 
   useEffect(() => {
     if (!websocketServerUrl) {
@@ -111,9 +121,25 @@ export const WebsocketProvider = ({
 
   useEffect(() => {
     if (initialRemoteUpdatesReceived) {
-      onInitialRemoteUpdatesReceived?.(sqlocal);
+      onInitialRemoteUpdatesReceived?.(sqlocal, { pubKeyHex, deviceId }).then(
+        ({ mutations, onSuccess }) => {
+          if (!mutations.length) {
+            return;
+          }
+
+          mutateAsync(mutations).then(() => {
+            onSuccess?.();
+          });
+        }
+      );
     }
-  }, [initialRemoteUpdatesReceived, onInitialRemoteUpdatesReceived]);
+  }, [
+    initialRemoteUpdatesReceived,
+    onInitialRemoteUpdatesReceived,
+    pubKeyHex,
+    deviceId,
+    mutateAsync,
+  ]);
 
   return (
     <WebsocketContext.Provider value={{ socket } as WebsocketContext}>

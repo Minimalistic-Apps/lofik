@@ -1,5 +1,5 @@
 export { SQLocal } from "sqlocal";
-export { LofikProvider } from "./contexts/LofikContext";
+export { LofikProvider, queryClient } from "./contexts/LofikContext";
 export { sqlocal } from "./db/sqlocal";
 export { useDatabaseActions } from "./hooks/useDatabaseActions";
 export { useLofikAccount } from "./hooks/useLofikAccount";

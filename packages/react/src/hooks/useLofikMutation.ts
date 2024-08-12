@@ -3,6 +3,7 @@ import { sha256 } from "@noble/hashes/sha256";
 import { bytesToHex, randomBytes, utf8ToBytes } from "@noble/hashes/utils";
 import { UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
+import { Socket } from "socket.io-client";
 import { sqlocal } from "../db/sqlocal";
 import {
   DatabaseMutationOperation,
@@ -21,14 +22,16 @@ type Params = Omit<
     unknown
   >,
   "mutationFn"
-> & { shouldSync: boolean; isFullSync?: boolean };
+> & { shouldSync: boolean; isFullSync?: boolean; socket?: Socket };
 
 export const useLofikMutation = ({
   shouldSync,
   isFullSync = false,
+  socket,
   ...options
 }: Params) => {
   const { sync } = useServerSync();
+  const { socket: ctxSocket } = useWebsocketContext();
 
   const mutate = useCallback(
     async (mutation: GenerateDatabaseMutation | GenerateDatabaseMutation[]) => {
@@ -43,25 +46,27 @@ export const useLofikMutation = ({
       }
 
       if (shouldSync) {
-        sync(mutations, ts, isFullSync);
+        sync({ mutations, ts, isFullSync, socket: ctxSocket || socket });
       }
     },
-    [shouldSync, sync, isFullSync]
+    [shouldSync, sync, isFullSync, ctxSocket, socket]
   );
 
   return useMutation({ ...options, mutationFn: mutate });
 };
 
+type ServerSyncParams = {
+  mutations: GenerateDatabaseMutation[];
+  ts: number;
+  isFullSync: boolean;
+  socket?: Socket;
+};
+
 const useServerSync = () => {
   const { privKey, pubKeyHex, deviceId } = useAccountContext();
-  const { socket } = useWebsocketContext();
 
   const sync = useCallback(
-    async (
-      mutations: GenerateDatabaseMutation[],
-      ts: number,
-      isFullSync: boolean
-    ) => {
+    async ({ mutations, ts, isFullSync, socket }: ServerSyncParams) => {
       const nonce = randomBytes(24);
 
       const chacha = xchacha20poly1305(sha256(privKey), nonce);
@@ -83,8 +88,12 @@ const useServerSync = () => {
       }
 
       try {
+        if (!socket) {
+          throw new Error("No socket :(");
+        }
+
         await socket
-          ?.timeout(10000)
+          .timeout(10000)
           .emitWithAck(
             isFullSync ? "messages-full-sync" : "messages",
             messages
@@ -111,7 +120,7 @@ const useServerSync = () => {
         await sqlocal.sql(sql);
       }
     },
-    [privKey, pubKeyHex, socket, deviceId]
+    [privKey, pubKeyHex, deviceId]
   );
 
   return useMemo(() => ({ sync }), [sync]);
