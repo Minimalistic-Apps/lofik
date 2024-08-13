@@ -31,6 +31,13 @@ export const queryClient = new QueryClient({
   },
 });
 
+function isWebAssemblySupported() {
+  return (
+    typeof WebAssembly === "object" &&
+    typeof WebAssembly.instantiate === "function"
+  );
+}
+
 export const LofikProvider = ({
   children,
   loader,
@@ -59,6 +66,10 @@ export const LofikProvider = ({
 
     prepareDatabase();
   }, [databaseInit, runMigrations]);
+
+  if (!isWebAssemblySupported()) {
+    return <div>Your browser does not support WebAssembly.</div>;
+  }
 
   if (isLoading) {
     return loader || null;
