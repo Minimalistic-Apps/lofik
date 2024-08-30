@@ -1,10 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { sqlocal } from "../db/sqlocal";
-import { useLofikQueryClient } from "./useLofikQueryClient";
 
 export const useDatabaseActions = () => {
-  const queryClient = useLofikQueryClient();
-
   const exportDatabase = useCallback(async (fileName: string) => {
     const file = await sqlocal.getDatabaseFile();
 
@@ -28,10 +25,8 @@ export const useDatabaseActions = () => {
       await sqlocal.sql(
         `INSERT INTO device (id, createdAt) VALUES ('${crypto.randomUUID()}', strftime('%s', 'now')*1000)`
       );
-
-      await queryClient.invalidateQueries();
     },
-    [queryClient]
+    []
   );
 
   return useMemo(
